@@ -1,26 +1,336 @@
 @import "tailwindcss";
 
+/*
+  Palette from Gelli's light mode concept:
+  navy #1E3A8A (headings and navigation), white (main background),
+  light gray #F1F5F9 (section backgrounds), blue #3B82F6 (buttons and highlights;
+  the brief's "#3882F6" is read as this).
+
+  White on #3B82F6 is only 3.7:1, so solid buttons are navy with white text and the
+  bright blue is kept for highlights, rules and focus. Blue text uses #2563EB (5.2:1).
+
+  Theme tokens: light values on :root, dark values under [data-theme="dark"].
+*/
+@custom-variant dark (&:where([data-theme="dark"], [data-theme="dark"] *));
+
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  color-scheme: light;
+  --c-page: #ffffff;
+  --c-paper: #f1f5f9;
+  --c-card: #ffffff;
+  --c-ink: #1e3a8a;
+  --c-text: #3f4b63;
+  --c-muted: #64708a;
+  --c-line: #dfe5ee;
+  --c-blue: #3b82f6;
+  --c-accent: #2563eb;
+  --c-btn: #1e3a8a;
+  --c-btn-hover: #2647a8;
+  --c-btn-text: #ffffff;
+  --c-tint: #e8f0fe;
+}
+
+[data-theme="dark"] {
+  color-scheme: dark;
+  --c-page: #0a1020;
+  --c-paper: #0f172b;
+  --c-card: #131d36;
+  --c-ink: #e7edff;
+  --c-text: #b2bdd6;
+  --c-muted: #8995b2;
+  --c-line: #22304f;
+  --c-blue: #6aa0ff;
+  --c-accent: #8db6ff;
+  --c-btn: #e7edff;
+  --c-btn-hover: #ffffff;
+  --c-btn-text: #0a1020;
+  --c-tint: rgb(106 160 255 / 0.12);
 }
 
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --color-page: var(--c-page);
+  --color-paper: var(--c-paper);
+  --color-card: var(--c-card);
+  --color-ink: var(--c-ink);
+  --color-text: var(--c-text);
+  --color-muted: var(--c-muted);
+  --color-line: var(--c-line);
+  --color-blue: var(--c-blue);
+  --color-accent: var(--c-accent);
+  --color-btn: var(--c-btn);
+  --color-btn-hover: var(--c-btn-hover);
+  --color-btn-text: var(--c-btn-text);
+  --color-tint: var(--c-tint);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+@theme {
+  --font-serif: var(--font-newsreader);
+  --font-sans: var(--font-manrope);
+
+  --ease-silk: cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+@layer base {
+  html {
+    scroll-behavior: smooth;
+    scroll-padding-top: 1.25rem;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  body {
+    background: var(--c-page);
+    color: var(--c-text);
+    font-family: var(--font-sans), system-ui, sans-serif;
+    text-rendering: optimizeLegibility;
+  }
+
+  h1,
+  h2,
+  h3,
+  h4 {
+    color: var(--c-ink);
+    font-family: var(--font-serif), Georgia, serif;
+    font-weight: 500;
+    text-wrap: balance;
+  }
+
+  p {
+    text-wrap: pretty;
+  }
+
+  ::selection {
+    background: var(--c-blue);
+    color: #ffffff;
+  }
+
+  :focus-visible {
+    outline: 2px solid var(--c-blue);
+    outline-offset: 3px;
+    border-radius: 6px;
   }
 }
 
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+/* Large screens: leave room for the masthead navbar when jumping to a section. */
+@media (min-width: 64rem) {
+  html {
+    scroll-padding-top: 5.5rem;
+  }
+}
+
+html:has(dialog[open]) {
+  overflow: hidden;
+}
+
+@page {
+  size: A4;
+  margin: 14mm 16mm;
+}
+
+/*
+  Theme switch: "curtains". The new theme opens from the middle of the screen outward
+  (animated from theme.ts); without View Transitions colors crossfade.
+*/
+::view-transition-old(root),
+::view-transition-new(root) {
+  animation: none;
+  mix-blend-mode: normal;
+}
+
+.theme-fade,
+.theme-fade *,
+.theme-fade *::before,
+.theme-fade *::after {
+  transition:
+    background-color 0.45s ease,
+    border-color 0.45s ease,
+    color 0.45s ease,
+    fill 0.45s ease !important;
+}
+
+/* ───────────── Page-load sequence ───────────── */
+
+@keyframes rise {
+  from {
+    opacity: 0;
+    translate: 0 20px;
+  }
+  to {
+    opacity: 1;
+    translate: 0 0;
+  }
+}
+
+.rise {
+  animation: rise 1s var(--ease-silk) both;
+  animation-delay: calc(var(--i, 0) * 110ms + 350ms);
+}
+
+/* Name lines slide up from behind a mask. */
+@keyframes unveil {
+  from {
+    translate: 0 105%;
+  }
+  to {
+    translate: 0 0;
+  }
+}
+
+.mask-line {
+  display: block;
+  overflow: hidden;
+  padding-bottom: 0.1em;
+  margin-bottom: -0.1em;
+}
+
+.mask-line > span {
+  display: block;
+  animation: unveil 1.15s var(--ease-silk) both;
+  animation-delay: calc(var(--i, 0) * 130ms + 200ms);
+}
+
+/* Oval portrait: grows open from a thin sliver. */
+@keyframes oval-open {
+  from {
+    clip-path: inset(48% 0 48% 0 round 999px);
+  }
+  to {
+    clip-path: inset(0 0 0 0 round 999px);
+  }
+}
+
+.oval-open {
+  animation: oval-open 1.3s var(--ease-silk) 0.3s both;
+}
+
+/* The ring of text around the portrait turns slowly. */
+@keyframes turn {
+  to {
+    rotate: 360deg;
+  }
+}
+
+.turn {
+  animation: turn 32s linear infinite;
+}
+
+/* ───────────── Scroll effects ───────────── */
+
+.js [data-reveal] {
+  opacity: 0;
+  translate: 0 24px;
+  transition:
+    opacity 0.9s var(--ease-silk),
+    translate 1s var(--ease-silk);
+  transition-delay: calc(var(--d, 0) * 1ms);
+}
+
+.js [data-reveal][data-shown] {
+  opacity: 1;
+  translate: 0 0;
+}
+
+/* Thin rule that draws across under section titles once revealed. */
+.rule-draw {
+  transform-origin: left;
+  scale: 0 1;
+  transition: scale 1.2s var(--ease-silk) 0.25s;
+}
+
+[data-shown] .rule-draw,
+html:not(.js) .rule-draw {
+  scale: 1 1;
+}
+
+/* Underline that draws in on hover, for text links. */
+.link-draw {
+  background: linear-gradient(currentColor, currentColor) left bottom / 0% 1px no-repeat;
+  transition: background-size 0.5s var(--ease-silk);
+}
+
+.link-draw:hover {
+  background-size: 100% 1px;
+}
+
+/* Project sheets stack: earlier sheets scale back slightly as the next slides over. */
+@supports (animation-timeline: view()) {
+  @media (prefers-reduced-motion: no-preference) and (min-width: 64rem) {
+    @keyframes recede {
+      to {
+        scale: 0.94;
+        filter: brightness(0.92);
+      }
+    }
+
+    .sheet-recede {
+      animation: recede linear both;
+      animation-timeline: view();
+      animation-range: exit-crossing 0% exit-crossing 60%;
+    }
+  }
+}
+
+/* Image viewer. */
+.viewer {
+  opacity: 0;
+  translate: 0 28px;
+  transition:
+    opacity 0.35s var(--ease-silk),
+    translate 0.5s var(--ease-silk),
+    overlay 0.5s allow-discrete,
+    display 0.5s allow-discrete;
+}
+
+.viewer[open] {
+  opacity: 1;
+  translate: 0 0;
+}
+
+@starting-style {
+  .viewer[open] {
+    opacity: 0;
+    translate: 0 28px;
+  }
+}
+
+.viewer::backdrop {
+  background: rgb(10 16 32 / 0);
+  transition:
+    background-color 0.35s,
+    overlay 0.5s allow-discrete,
+    display 0.5s allow-discrete;
+}
+
+.viewer[open]::backdrop {
+  background: rgb(10 16 32 / 0.65);
+}
+
+@starting-style {
+  .viewer[open]::backdrop {
+    background: rgb(10 16 32 / 0);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+
+  .js [data-reveal] {
+    opacity: 1 !important;
+    translate: none !important;
+  }
+
+  .rule-draw {
+    scale: 1 1;
+  }
+
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-delay: 0ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    transition-delay: 0ms !important;
+  }
 }
